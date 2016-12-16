@@ -1,0 +1,98 @@
+apply plugin: 'com.android.application'
+
+android {
+  compileSdkVersion 25
+  buildToolsVersion "25.0.0"
+
+  defaultConfig {
+    applicationId "com.jwdev.myproductflavordemo"
+
+    minSdkVersion 14
+    targetSdkVersion 25
+    versionCode 1
+    versionName "1.0"
+
+    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    //    manifestPlaceholders = [umeng_appkey        : "58539c6cc62dca540a001026",
+    //                            umeng_message_secret: "ce62c69dbcd6148de7c67c8db7375d33",
+    //                            channel_id          : "main"]
+  }
+
+  signingConfigs {
+    release
+  }
+
+  buildTypes {
+    release {
+      shrinkResources true
+      minifyEnabled true
+      signingConfig signingConfigs.release
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+
+  productFlavors {
+    free {
+      applicationIdSuffix ".free"
+      versionNameSuffix ".free"
+      manifestPlaceholders = [umeng_appkey        : "58539fe7310c935fe9001266",
+                              umeng_message_secret: "a0e04e7451b2bfb1676e1d0127b3af5a",
+                              umeng_channel_id    : "free"]
+    }
+
+    paid {
+      applicationIdSuffix ".paid"
+      versionNameSuffix ".paid"
+      manifestPlaceholders = [umeng_appkey        : "5853a008f43e486420001fca",
+                              umeng_message_secret: "2f4b748537b28e032e15d7d5708bde5f",
+                              umeng_channel_id    : "paid"]
+    }
+  }
+
+  variantFilter { variant ->
+        def names = variant.flavors*.name
+
+    if (variant.buildType.name == "debug" && names.contains('paid')) {
+      variant.ignore = true
+    }
+  }
+}
+
+dependencies {
+  compile fileTree(dir: 'libs', include: ['*.jar'])
+
+  compile project(':PushSDK')
+
+  androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    exclude group: 'com.android.support', module: 'support-annotations'
+  })
+  compile 'com.android.support:appcompat-v7:25.1.0'
+  testCompile 'junit:junit:4.12'
+}
+
+// 两种定义方式均可
+//def propFile = new File('signing.properties')
+def File propFile = rootProject.file('signing.properties')
+
+if (propFile.exists() && propFile.canRead()) {
+  def Properties props = new Properties()
+  props.load(new FileInputStream(propFile))
+
+  if (props != null &&
+      props.containsKey('RELEASE_STORE_FILE') &&
+      props.containsKey('RELEASE_STORE_PASSWORD') &&
+      props.containsKey('RELEASE_KEY_ALIAS') &&
+      props.containsKey('RELEASE_KEY_PASSWORD')) {
+    android.signingConfigs.release.storeFile = file(props['RELEASE_STORE_FILE'])
+    android.signingConfigs.release.storePassword = props['RELEASE_STORE_PASSWORD']
+    android.signingConfigs.release.keyAlias = props['RELEASE_KEY_ALIAS']
+    android.signingConfigs.release.keyPassword = props['RELEASE_KEY_PASSWORD']
+  } else {
+    println 'signing.properties found but some entries are missing line 166'
+    android.buildTypes.release.signingConfig = null
+  }
+} else {
+  println 'signing.properties not found line 170'
+  android.buildTypes.release.signingConfig = null
+}

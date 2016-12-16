@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.jwdev.myproductflavordemo">
+
+  <application
+      android:name=".MyApplication"
+      android:allowBackup="true"
+      android:icon="@mipmap/ic_launcher"
+      android:label="@string/app_name"
+      android:supportsRtl="true"
+      android:theme="@style/AppTheme">
+    <activity android:name=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <meta-data
+        android:name="UMENG_APPKEY"
+        android:value="${umeng_appkey}">
+    </meta-data>
+    <meta-data
+        android:name="UMENG_MESSAGE_SECRET"
+        android:value="${umeng_message_secret}">
+    </meta-data>
+    <meta-data
+        android:name="UMENG_CHANNEL"
+        android:value="${umeng_channel_id}">
+    </meta-data>
+
+  </application>
+
+</manifest>
