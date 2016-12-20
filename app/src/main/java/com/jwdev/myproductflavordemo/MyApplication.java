@@ -3,14 +3,15 @@ package com.jwdev.myproductflavordemo;
 import android.app.Application;
 import android.app.Notification;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.text.TextUtils;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 import com.umeng.message.IUmengRegisterCallback;
 import com.umeng.message.MsgConstant;
 import com.umeng.message.PushAgent;
-import com.umeng.message.UTrack;
+import com.umeng.message.UmengDownloadResourceService;
 import com.umeng.message.UmengMessageHandler;
 import com.umeng.message.UmengNotificationClickHandler;
 import com.umeng.message.common.UmLog;
@@ -18,11 +19,13 @@ import com.umeng.message.entity.UMessage;
 
 /**
  * Created by johnwatson on 16/12/2016.
+ * <br>http://dev.umeng.com/push/android/integration
+ * <br>http://bbs.umeng.com/thread-5911-1-1.html
  */
 public class MyApplication extends Application {
   private static final String TAG = MyApplication.class.getName();
-  //public static final String UPDATE_STATUS_ACTION =
-  //    "com.jwdev.myproductflavordemo.action.UPDATE_STATUS";
+
+  private static final String b = TAG;
 
   @Override public void onCreate() {
     super.onCreate();
@@ -48,26 +51,79 @@ public class MyApplication extends Application {
 
     UmengMessageHandler messageHandler = new UmengMessageHandler() {
 
-      ///**
-      // * 自定义消息的回调方法
-      // * */
-      //@Override public void dealWithCustomMessage(final Context context, final UMessage msg) {
-      //  new Handler().post(new Runnable() {
-      //
-      //    @Override public void run() {
-      //      // 对自定义消息的处理方式，点击或者忽略
-      //      boolean isClickOrDismissed = true;
-      //      if (isClickOrDismissed) {
-      //        //自定义消息的点击统计
-      //        UTrack.getInstance(getApplicationContext()).trackMsgClick(msg);
-      //      } else {
-      //        //自定义消息的忽略统计
-      //        UTrack.getInstance(getApplicationContext()).trackMsgDismissed(msg);
-      //      }
-      //      Toast.makeText(context, msg.custom, Toast.LENGTH_LONG).show();
-      //    }
-      //  });
-      //}
+      @Override public int getSmallIconId(Context var1, UMessage var2) {
+        int var3 = -1;
+
+        try {
+          if (!TextUtils.isEmpty(var2.icon)) {
+            var3 = MyUtil.a(var1).c(var2.icon);
+          }
+
+          if (var3 < 0) {
+            var3 = MyUtil.a(var1).c("umeng_push_notification_default_small_icon");
+          }
+
+          if (var3 < 0) {
+            UmLog.d(b, "no custom notificaiton icon, fail back to app icon.");
+            var3 = var1.getPackageManager()
+                .getPackageInfo(var1.getPackageName(), 0).applicationInfo.icon;
+          }
+
+          if (var3 < 0) {
+            UmLog.e(b,
+                "Cann\'t find appropriate icon for notification, please make sure you have specified an icon for this notification or the app has defined an icon.");
+          }
+        } catch (Exception var5) {
+          var5.printStackTrace();
+        }
+
+        return var3;
+      }
+
+      @Override public Bitmap getLargeIcon(Context var1, UMessage var2) {
+        int a = 64;
+
+        Bitmap var3 = null;
+
+        try {
+          if (var2.isLargeIconFromInternet()) {
+            String var4 = UmengDownloadResourceService.getMessageResourceFolder(var1, var2)
+                + var2.img.hashCode();
+            var3 = BitmapFactory.decodeFile(var4);
+          }
+
+          int var7;
+          if (var3 == null) {
+            var7 = -1;
+            if (!TextUtils.isEmpty(var2.largeIcon)) {
+              var7 = MyUtil.a(var1).c(var2.largeIcon);
+            }
+
+            if (var7 < 0) {
+              var7 = MyUtil.a(var1).c("umeng_push_notification_default_large_icon");
+            }
+
+            if (var7 > 0) {
+              var3 = BitmapFactory.decodeResource(var1.getResources(), var7);
+            }
+          }
+
+          if (var3 != null) {
+            if (Build.VERSION.SDK_INT >= 11) {
+              var7 = (int) var1.getResources().getDimension(17104902);
+            } else {
+              var7 = com.umeng.message.proguard.i.a(var1, (float) a);
+            }
+
+            Bitmap var5 = Bitmap.createScaledBitmap(var3, var7, var7, true);
+            return var5;
+          }
+        } catch (Exception var6) {
+          var6.printStackTrace();
+        }
+
+        return null;
+      }
 
       /**
        * 自定义通知栏样式的回调方法
@@ -78,64 +134,30 @@ public class MyApplication extends Application {
         UmLog.i(TAG, "getNotification msg: " + msg.title);
         UmLog.i(TAG, "getNotification msg: " + msg.text);
 
-        Notification.Builder builder = new Notification.Builder(context);
-        RemoteViews myNotificationView =
-            new RemoteViews(context.getPackageName(), R.layout.notification_view);
-        myNotificationView.setTextViewText(R.id.notification_title, msg.title);
-        myNotificationView.setTextViewText(R.id.notification_text, msg.text);
-        //myNotificationView.setImageViewBitmap(R.id.notification_large_icon,
-        //    getLargeIcon(context, msg));
-        myNotificationView.setImageViewResource(R.id.notification_large_icon,
-            R.drawable.ic_launcher);
-        //myNotificationView.setImageViewResource(R.id.notification_small_icon,
-        //    getSmallIconId(context, msg));
-        builder.setContent(myNotificationView)
-            //.setSmallIcon(getSmallIconId(context, msg))
-            .setSmallIcon(R.drawable.ic_launcher).setTicker(msg.ticker).setAutoCancel(true);
+        switch (msg.builder_id) {
+          case 1:
+            Notification.Builder builder = new Notification.Builder(context);
+            RemoteViews myNotificationView =
+                new RemoteViews(context.getPackageName(), R.layout.notification_view);
+            myNotificationView.setTextViewText(R.id.notification_title, msg.title);
+            myNotificationView.setTextViewText(R.id.notification_text, msg.text);
+            myNotificationView.setImageViewBitmap(R.id.notification_large_icon,
+                getLargeIcon(context, msg));
+            //myNotificationView.setImageViewResource(R.id.notification_large_icon,
+            //    R.drawable.custom_icon);
+            myNotificationView.setImageViewResource(R.id.notification_small_icon,
+                getSmallIconId(context, msg));
+            builder.setContent(myNotificationView).setSmallIcon(getSmallIconId(context, msg))
+                //.setSmallIcon(R.drawable.custom_icon)
+                .setTicker(msg.ticker).setAutoCancel(true);
 
-        return builder.getNotification();
-
-        //switch (msg.builder_id) {
-        //  case 1:
-        //    Notification.Builder builder = new Notification.Builder(context);
-        //    RemoteViews myNotificationView =
-        //        new RemoteViews(context.getPackageName(), R.layout.notification_view);
-        //    myNotificationView.setTextViewText(R.id.notification_title, msg.title);
-        //    myNotificationView.setTextViewText(R.id.notification_text, msg.text);
-        //    //myNotificationView.setImageViewBitmap(R.id.notification_large_icon,
-        //    //    getLargeIcon(context, msg));
-        //    myNotificationView.setImageViewResource(R.id.notification_large_icon,
-        //        R.drawable.ic_launcher);
-        //    //myNotificationView.setImageViewResource(R.id.notification_small_icon,
-        //    //    getSmallIconId(context, msg));
-        //    builder.setContent(myNotificationView)
-        //        //.setSmallIcon(getSmallIconId(context, msg))
-        //        .setSmallIcon(R.drawable.ic_launcher).setTicker(msg.ticker).setAutoCancel(true);
-        //
-        //    return builder.getNotification();
-        //  default:
-        //    //默认为0，若填写的builder_id并不存在，也使用默认。
-        //    return super.getNotification(context, msg);
-        //}
+            return builder.getNotification();
+          default:
+            //默认为0，若填写的builder_id并不存在，也使用默认。
+            return super.getNotification(context, msg);
+        }
       }
     };
     mPushAgent.setMessageHandler(messageHandler);
-
-    /**
-     * 自定义行为的回调处理
-     * UmengNotificationClickHandler是在BroadcastReceiver中被调用，故
-     * 如果需启动Activity，需添加Intent.FLAG_ACTIVITY_NEW_TASK
-     * */
-    UmengNotificationClickHandler notificationClickHandler = new UmengNotificationClickHandler() {
-      @Override public void dealWithCustomAction(Context context, UMessage msg) {
-        UmLog.i(TAG, "notificationClickHandler: " + msg.title);
-        UmLog.i(TAG, "notificationClickHandler: " + msg.text);
-        //Toast.makeText(context, msg.custom, Toast.LENGTH_LONG).show();
-      }
-    };
-    //使用自定义的NotificationHandler，来结合友盟统计处理消息通知
-    //参考http://bbs.umeng.com/thread-11112-1-1.html
-    //CustomNotificationHandler notificationClickHandler = new CustomNotificationHandler();
-    mPushAgent.setNotificationClickHandler(notificationClickHandler);
   }
 }
