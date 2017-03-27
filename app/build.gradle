@@ -5,7 +5,7 @@ android {
   buildToolsVersion "25.0.2"
 
   defaultConfig {
-//    applicationId "com.jwdev.myproductflavordemo"
+    //    applicationId "com.jwdev.myproductflavordemo"
 
     minSdkVersion 14
     targetSdkVersion 25
@@ -34,7 +34,7 @@ android {
 
   productFlavors {
     free {
-//      applicationIdSuffix ".free"
+      //      applicationIdSuffix ".free"
       applicationId "com.jwdev.myproductflavordemo.free"
       versionNameSuffix ".free"
       manifestPlaceholders = [umeng_appkey        : "58539fe7310c935fe9001266",
@@ -43,7 +43,7 @@ android {
     }
 
     paid {
-//      applicationIdSuffix ".paid"
+      //      applicationIdSuffix ".paid"
       applicationId "cn.jwdev.myproductflavor.paid"
       versionNameSuffix ".paid"
       manifestPlaceholders = [umeng_appkey        : "5853a008f43e486420001fca",
@@ -52,13 +52,13 @@ android {
     }
   }
 
-//  variantFilter { variant ->
-//        def names = variant.flavors*.name
-//
-//    if (variant.buildType.name == "debug" && names.contains('paid')) {
-//      variant.ignore = true
-//    }
-//  }
+  //  variantFilter { variant ->
+  //        def names = variant.flavors*.name
+  //
+  //    if (variant.buildType.name == "debug" && names.contains('paid')) {
+  //      variant.ignore = true
+  //    }
+  //  }
 }
 
 dependencies {
@@ -69,7 +69,7 @@ dependencies {
   androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
     exclude group: 'com.android.support', module: 'support-annotations'
   })
-  compile 'com.android.support:appcompat-v7:25.1.0'
+  compile 'com.android.support:appcompat-v7:25.3.0'
   testCompile 'junit:junit:4.12'
 }
 
